@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,21 +7,22 @@ using System.Threading.Tasks;
 
 namespace Tracer
 {
-    public class Tracer : ITracer
+    public class TracerMain : ITracer
     {
+        Stopwatch watch = new Stopwatch();
         public object GetTraceResult()
         {
-            throw new NotImplementedException();
+            return watch.ElapsedMilliseconds;
         }
 
         public void StartTrace()
         {
-            throw new NotImplementedException();
+            watch.Start();
         }
 
         public void StopTrace()
         {
-            throw new NotImplementedException();
+            watch.Stop();
         }
     }
 }
