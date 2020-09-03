@@ -9,34 +9,55 @@ namespace Tracer
 {
     public class TracerMain : ITracer
     {
-        private Stopwatch watch = new Stopwatch();
-        private TracerResult result = new TracerResult();
+        private Dictionary<string, Stopwatch> TracerWatches = new Dictionary<string, Stopwatch>();
+        private List<TracerItem> result = new List<TracerItem>();
 
-        public TracerResult GetTraceResult()
+        public List<TracerItem> GetTraceResult()
         {
             return result;
         }
 
         public void StartTrace()
         {
+            var watch = new Stopwatch();
+            TracerWatches.Add(GetFullMethodName(), watch);
             watch.Start();
         }
 
         public void StopTrace()
         {
-            watch.Stop();
+            TracerWatches[GetFullMethodName()].Stop();
+            AddToTraceResult();
+        }
+
+        private string GetFullMethodName()
+        {
             StackTrace st = new StackTrace();
-            StackFrame sf = st.GetFrame(1);
-            result.CurrentMethodName = sf.GetMethod().Name;
-            result.CurrentMethodClassName = sf.GetMethod().DeclaringType.Name;
-            result.ElapsedMilliseconds = watch.ElapsedMilliseconds;
+            StackFrame sf = st.GetFrame(2);
+            return $"{sf.GetMethod().DeclaringType.FullName}.{sf.GetMethod().Name}";
+        }
+
+        private void AddToTraceResult()
+        {
+            StackTrace st = new StackTrace();
+            StackFrame sf = st.GetFrame(2);
+            string FullMethodName = $"{sf.GetMethod().DeclaringType.FullName}.{sf.GetMethod().Name}";
+            var item = new TracerItem()
+            {
+                MethodName = sf.GetMethod().Name,
+                MethodClassName = sf.GetMethod().DeclaringType.Name,
+                ElapsedMilliseconds = TracerWatches[FullMethodName].ElapsedMilliseconds,
+                SubMethods = null,
+            };
+            result.Add(item);
         }
     }
 
-    public class TracerResult
+    public class TracerItem
     {
         public long ElapsedMilliseconds { get; set; }
-        public string CurrentMethodName { get; set; }
-        public string CurrentMethodClassName { get; set; }
+        public string MethodName { get; set; }
+        public string MethodClassName { get; set; }
+        public List<TracerItem> SubMethods { get; set; }
     }
 }

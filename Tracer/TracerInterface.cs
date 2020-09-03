@@ -1,9 +1,11 @@
-﻿namespace Tracer
+﻿using System.Collections.Generic;
+
+namespace Tracer
 {
     public interface ITracer
     {
         void StartTrace();
         void StopTrace();
-        TracerResult GetTraceResult();
+        List<TracerItem> GetTraceResult();
     }
 }

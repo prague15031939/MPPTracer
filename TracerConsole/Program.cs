@@ -13,14 +13,28 @@ namespace TracerConsole
         static void Main(string[] args)
         {
             _tracer = new TracerMain();
-            var obj = new Example();
-            var _tracer2 = new TracerMain();
-            _tracer.StartTrace();
-            obj.DoSmth(_tracer2);
-            _tracer.StopTrace();
-            TracerResult result = _tracer.GetTraceResult();
-            Console.WriteLine($"{result.CurrentMethodClassName} - {result.CurrentMethodName} - {result.ElapsedMilliseconds} ms");
+            ExampleMethod();
+            List<TracerItem> result = _tracer.GetTraceResult();
+            DisplayTracerResult(result);
             Console.ReadKey();
+        }
+
+        private static void DisplayTracerResult(List<TracerItem> result)
+        {
+            foreach (TracerItem item in result)
+            {
+                Console.WriteLine($"{item.MethodClassName} - {item.MethodName} - {item.ElapsedMilliseconds} ms");
+                if (item.SubMethods != null)
+                    DisplayTracerResult(item.SubMethods);
+            }
+        }
+
+        public static void ExampleMethod()
+        {
+            _tracer.StartTrace();
+            var obj = new Example();
+            obj.DoSmth(_tracer);
+            _tracer.StopTrace();
         }
     }
 
@@ -30,10 +44,8 @@ namespace TracerConsole
         {
             _tracer.StartTrace();
             for (int i = 0; i < 100; i++)
-                Console.WriteLine("sho");
+                Console.WriteLine("111");
             _tracer.StopTrace();
-            TracerResult result = _tracer.GetTraceResult();
-            Console.WriteLine($"{result.CurrentMethodClassName} - {result.CurrentMethodName} - {result.ElapsedMilliseconds} ms");
         }
     }
 }
