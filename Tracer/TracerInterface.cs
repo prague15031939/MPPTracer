@@ -4,6 +4,6 @@
     {
         void StartTrace();
         void StopTrace();
-        object GetTraceResult();
+        TracerResult GetTraceResult();
     }
 }

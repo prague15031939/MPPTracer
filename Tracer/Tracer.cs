@@ -9,10 +9,12 @@ namespace Tracer
 {
     public class TracerMain : ITracer
     {
-        Stopwatch watch = new Stopwatch();
-        public object GetTraceResult()
+        private Stopwatch watch = new Stopwatch();
+        private TracerResult result = new TracerResult();
+
+        public TracerResult GetTraceResult()
         {
-            return watch.ElapsedMilliseconds;
+            return result;
         }
 
         public void StartTrace()
@@ -23,6 +25,18 @@ namespace Tracer
         public void StopTrace()
         {
             watch.Stop();
+            StackTrace st = new StackTrace();
+            StackFrame sf = st.GetFrame(1);
+            result.CurrentMethodName = sf.GetMethod().Name;
+            result.CurrentMethodClassName = sf.GetMethod().DeclaringType.Name;
+            result.ElapsedMilliseconds = watch.ElapsedMilliseconds;
         }
+    }
+
+    public class TracerResult
+    {
+        public long ElapsedMilliseconds { get; set; }
+        public string CurrentMethodName { get; set; }
+        public string CurrentMethodClassName { get; set; }
     }
 }

@@ -18,7 +18,8 @@ namespace TracerConsole
             _tracer.StartTrace();
             obj.DoSmth(_tracer2);
             _tracer.StopTrace();
-            Console.WriteLine($"{_tracer.GetTraceResult()} ms");
+            TracerResult result = _tracer.GetTraceResult();
+            Console.WriteLine($"{result.CurrentMethodClassName} - {result.CurrentMethodName} - {result.ElapsedMilliseconds} ms");
             Console.ReadKey();
         }
     }
@@ -31,7 +32,8 @@ namespace TracerConsole
             for (int i = 0; i < 100; i++)
                 Console.WriteLine("sho");
             _tracer.StopTrace();
-            Console.WriteLine($"{_tracer.GetTraceResult()} ms");
+            TracerResult result = _tracer.GetTraceResult();
+            Console.WriteLine($"{result.CurrentMethodClassName} - {result.CurrentMethodName} - {result.ElapsedMilliseconds} ms");
         }
     }
 }
