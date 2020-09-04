@@ -14,18 +14,21 @@ namespace TracerConsole
         {
             _tracer = new TracerMain();
             ExampleMethod();
-            List<TracerItem> result = _tracer.GetTraceResult();
-            DisplayTracerResult(result);
+            AnotherExampleMethod();
+            List<TraceItem> result = _tracer.GetTraceResult();
+            DisplayTraceResult(result);
             Console.ReadKey();
         }
 
-        private static void DisplayTracerResult(List<TracerItem> result)
+        private static void DisplayTraceResult(List<TraceItem> result, int indent = 0)
         {
-            foreach (TracerItem item in result)
+            foreach (TraceItem item in result)
             {
+                for (int i = 0; i < indent; i++)
+                    Console.Write("  ");
                 Console.WriteLine($"{item.MethodClassName} - {item.MethodName} - {item.ElapsedMilliseconds} ms");
                 if (item.SubMethods != null)
-                    DisplayTracerResult(item.SubMethods);
+                    DisplayTraceResult(item.SubMethods, indent + 2);
             }
         }
 
@@ -34,6 +37,19 @@ namespace TracerConsole
             _tracer.StartTrace();
             var obj = new Example();
             obj.DoSmth(_tracer);
+            obj.DoSmthMore(_tracer);
+            obj.DoSmth(_tracer);
+            _tracer.StopTrace();
+        }
+
+        public static void AnotherExampleMethod()
+        {
+            _tracer.StartTrace();
+            /*var obj = new Example();
+            obj.DoSmth(_tracer);
+            obj.DoSmth(_tracer);*/
+            for (int i = 0; i < 10; i++)
+                Console.WriteLine("kkk");
             _tracer.StopTrace();
         }
     }
@@ -45,6 +61,15 @@ namespace TracerConsole
             _tracer.StartTrace();
             for (int i = 0; i < 100; i++)
                 Console.WriteLine("111");
+            _tracer.StopTrace();
+        }
+
+        public void DoSmthMore(ITracer _tracer)
+        {
+            _tracer.StartTrace();
+            for (int i = 0; i < 5; i++)
+                Console.WriteLine("uuu");
+            DoSmth(_tracer);
             _tracer.StopTrace();
         }
     }
