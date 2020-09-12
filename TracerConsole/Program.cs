@@ -11,7 +11,10 @@ namespace TracerConsole
     class Program
     {
         public static ITracer _tracer;
+
         public static int bar = 3;
+        public static int sho = 10;
+
         static void Main(string[] args)
         {
             _tracer = new TracerMain();
@@ -22,14 +25,16 @@ namespace TracerConsole
             OneMoreThread.Start();
 
             ExampleMethod();
+            recursion();
             AnotherExampleMethod();
             while (bar != 0)
                 ;
             var result = _tracer.GetTraceResult();
+            DisplayTraceResult(result.root);
 
             ///
 
-            ISerializer serializer = new JsonSerializer();
+            /*ISerializer serializer = new JsonSerializer();
             string JsonLine = serializer.Serialize(result);
             serializer = new CustomXmlSerializer();
             string XmlLine = serializer.Serialize(result);
@@ -40,7 +45,7 @@ namespace TracerConsole
             displayer = new FileDisplayer(@"D:\\sho.txt");
             displayer.Display(JsonLine);
             displayer = new FileDisplayer(@"D:\\kok.txt");
-            displayer.Display(XmlLine);
+            displayer.Display(XmlLine);*/
 
             ///
 
@@ -79,10 +84,7 @@ namespace TracerConsole
         public static void AnotherExampleMethod()
         {
             _tracer.StartTrace();
-            /*var obj = new Example();
-            obj.DoSmth(_tracer);
-            obj.DoSmth(_tracer);*/
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
                 Console.WriteLine("kkk");
             _tracer.StopTrace();
             bar--;
@@ -93,6 +95,21 @@ namespace TracerConsole
             _tracer.StartTrace();
             AnotherExampleMethod();
             _tracer.StopTrace();
+        }
+
+        public static void recursion()
+        {
+            if (sho > 0)
+            {
+                _tracer.StartTrace();
+                sho--;
+                for (int i = 0; i < 1000; i++)
+                    Console.WriteLine("111");
+                recursion();
+                _tracer.StopTrace();
+            }
+            else
+                return;
         }
     }
 

@@ -7,9 +7,9 @@ namespace Tracer
 {
     public class TracerMain : ITracer
     {
-        private Dictionary<string, Stopwatch> _TraceWatches = new Dictionary<string, Stopwatch>();
+        private Dictionary<int, ThreadStack> _stacks = new Dictionary<int, ThreadStack>();
         private List<TraceItem> _result = new List<TraceItem>();
-        private static object locker = new object();
+        private static object _locker = new object();
 
         public TraceResult GetTraceResult()
         {
@@ -21,46 +21,26 @@ namespace Tracer
                     thread.ElapsedMilliseconds += method.ElapsedMilliseconds;
                 }
             }
+            
             return new TraceResult(_result);
         }
 
         public void StartTrace()
         {
             var watch = new Stopwatch();
-            string FullMethodName = GetFullMethodName();
-
-            lock (locker)
-            {
-                if (_TraceWatches.ContainsKey(FullMethodName))
-                    _TraceWatches[FullMethodName] = watch;
-                else
-                    _TraceWatches.Add(GetFullMethodName(), watch);
-            }
-            AddToTraceResult();
+            AddToTraceResult(watch);
             watch.Start();
         }
 
         public void StopTrace()
         {
-            string FullMethodName = GetFullMethodName();
-            _TraceWatches[FullMethodName].Stop();
-            string MethodName = FullMethodName.Substring(FullMethodName.LastIndexOf('.') + 1);
-
-            int CurrentThreadID = Thread.CurrentThread.ManagedThreadId;
-            lock (locker)
+            lock (_locker)
             {
-                int TraceResultThreadIndex = GetTraceResultThreadIndex(CurrentThreadID);
-
-                ModifyTraceItemElapsedTime((_result[TraceResultThreadIndex] as ThreadItem).SubMethods, MethodName, _TraceWatches[FullMethodName].ElapsedMilliseconds);
+                int CurrentThreadID = Thread.CurrentThread.ManagedThreadId;
+                var (watch, item) = _stacks[CurrentThreadID].TraceWatches.Pop();
+                watch.Stop();
+                item.ElapsedMilliseconds = watch.ElapsedMilliseconds;
             }
-        }
-
-        private string GetFullMethodName()
-        {
-            StackTrace st = new StackTrace();
-            StackFrame sf = st.GetFrame(2);
-            int CurrentThreadID = Thread.CurrentThread.ManagedThreadId;
-            return $"{CurrentThreadID}:{sf.GetMethod().DeclaringType.FullName}.{sf.GetMethod().Name}";
         }
 
         private int GetTraceResultThreadIndex(int TargetID)
@@ -73,43 +53,43 @@ namespace Tracer
             return -1;
         }
 
-        private void ModifyTraceItemElapsedTime(List<TraceItem> ResultNode, string target, long time)
-        {
-            TraceItem LastElement = ResultNode[ResultNode.Count - 1];
-            if ((LastElement as MethodItem).MethodName == target)
-                LastElement.ElapsedMilliseconds = time;
-            else if (LastElement.SubMethods != null)
-                ModifyTraceItemElapsedTime(LastElement.SubMethods, target, time);
-        }
-
-        private void AddToTraceResult()
+        private void AddToTraceResult(Stopwatch watch)
         {
             int CurrentThreadID = Thread.CurrentThread.ManagedThreadId;
             int TraceResultThreadIndex;
-            lock (locker)
+            lock (_locker)
             {
                 TraceResultThreadIndex = GetTraceResultThreadIndex(CurrentThreadID);
                 if (TraceResultThreadIndex == -1)
-                { // is absent
+                {
                     _result.Add(new ThreadItem(CurrentThreadID));
                     TraceResultThreadIndex = _result.Count - 1;
-                    //TraceResultThreadIndex = InsertThreadIntoTraceResult(CurrentThreadID);
                 }
             }
 
             StackTrace st = new StackTrace();
             StackFrame sf = st.GetFrame(2);
-            string FullMethodName = $"{CurrentThreadID}:{sf.GetMethod().DeclaringType.FullName}.{sf.GetMethod().Name}";
             var item = new MethodItem()
             {
                 MethodName = sf.GetMethod().Name,
                 MethodClassName = sf.GetMethod().DeclaringType.Name,
-                ElapsedMilliseconds = _TraceWatches[FullMethodName].ElapsedMilliseconds,
+                ElapsedMilliseconds = 0,
                 SubMethods = null,
             };
 
-            lock (locker)
+            lock (_locker)
             {
+                if (_stacks.ContainsKey(CurrentThreadID))
+                {
+                    _stacks[CurrentThreadID].TraceWatches.Push((watch, item));
+                }
+                else
+                {
+                    var stack = new ThreadStack();
+                    stack.TraceWatches.Push((watch, item));
+                    _stacks.Add(CurrentThreadID, stack);
+                }
+
                 InsertIntoTree((_result[TraceResultThreadIndex] as ThreadItem).SubMethods, item, st.GetFrames());
             }
         }
@@ -141,7 +121,16 @@ namespace Tracer
                 ResultNode.Add(item);
             }
         }
+    }
 
+    public class ThreadStack
+    {
+        public Stack<(Stopwatch watch, TraceItem obj)> TraceWatches;
+
+        public ThreadStack()
+        {
+            TraceWatches = new Stack<(Stopwatch watch, TraceItem obj)>();
+        }
     }
 
 }
