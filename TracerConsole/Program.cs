@@ -25,8 +25,25 @@ namespace TracerConsole
             AnotherExampleMethod();
             while (bar != 0)
                 ;
-            List<TraceItem> result = _tracer.GetTraceResult();
-            DisplayTraceResult(result);
+            var result = _tracer.GetTraceResult();
+
+            ///
+
+            ISerializer serializer = new JsonSerializer();
+            string JsonLine = serializer.Serialize(result);
+            serializer = new CustomXmlSerializer();
+            string XmlLine = serializer.Serialize(result);
+
+            IDisplayer displayer = new ConsoleDisplayer();
+            displayer.Display(JsonLine);
+            displayer.Display(XmlLine);
+            displayer = new FileDisplayer(@"D:\\sho.txt");
+            displayer.Display(JsonLine);
+            displayer = new FileDisplayer(@"D:\\kok.txt");
+            displayer.Display(XmlLine);
+
+            ///
+
             Console.ReadKey();
         }
 
@@ -38,7 +55,7 @@ namespace TracerConsole
                     Console.Write("  ");
 
                 if (item is ThreadItem)
-                    Console.WriteLine($"thread #{(item as ThreadItem).ThreadID}:");
+                    Console.WriteLine($"thread #{(item as ThreadItem).ThreadID} - {item.ElapsedMilliseconds} ms:");
                 else if (item is MethodItem)
                 {
                     MethodItem mItem = item as MethodItem;

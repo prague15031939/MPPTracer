@@ -6,6 +6,6 @@ namespace Tracer
     {
         void StartTrace();
         void StopTrace();
-        List<TraceItem> GetTraceResult();
+        TraceResult GetTraceResult();
     }
 }

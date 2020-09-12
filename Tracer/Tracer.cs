@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Tracer
 {
@@ -12,9 +11,17 @@ namespace Tracer
         private List<TraceItem> _result = new List<TraceItem>();
         private static object locker = new object();
 
-        public List<TraceItem> GetTraceResult()
+        public TraceResult GetTraceResult()
         {
-            return _result;
+            foreach (TraceItem thread in _result)
+            {
+                thread.ElapsedMilliseconds = 0;
+                foreach (TraceItem method in thread.SubMethods)
+                {
+                    thread.ElapsedMilliseconds += method.ElapsedMilliseconds;
+                }
+            }
+            return new TraceResult(_result);
         }
 
         public void StartTrace()
@@ -137,26 +144,4 @@ namespace Tracer
 
     }
 
-    public class TraceItem
-    {
-        public long ElapsedMilliseconds { get; set; }
-        public List<TraceItem> SubMethods { get; set; }
-    }
-
-    public class MethodItem : TraceItem
-    {
-        public string MethodName { get; set; }
-        public string MethodClassName { get; set; }
-    }
-
-    public class ThreadItem : TraceItem
-    {
-        public ThreadItem(int id)
-        {
-            ThreadID = id;
-            SubMethods = new List<TraceItem>();
-        }
-
-        public int ThreadID { get; set; }
-    }
 }
