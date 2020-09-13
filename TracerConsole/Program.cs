@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using Tracer;
 
 namespace TracerConsole
@@ -12,33 +10,30 @@ namespace TracerConsole
     {
         public static ITracer _tracer;
 
-        public static int bar = 3;
-        public static int sho = 10;
-
         static void Main(string[] args)
         {
             _tracer = new TracerMain();
 
+            var obj = new Example(_tracer);
             Thread AnotherThread = new Thread(new ThreadStart(ramp));
             AnotherThread.Start();
             Thread OneMoreThread = new Thread(new ThreadStart(AnotherExampleMethod));
             OneMoreThread.Start();
 
             ExampleMethod();
-            recursion();
+            obj.recursion();
             AnotherExampleMethod();
-            while (bar != 0)
-                ;
+
+            AnotherThread.Join();
+            OneMoreThread.Join(); 
+
             var result = _tracer.GetTraceResult();
             DisplayTraceResult(result.root);
-
-            ///
 
             /*ISerializer serializer = new JsonSerializer();
             string JsonLine = serializer.Serialize(result);
             serializer = new CustomXmlSerializer();
             string XmlLine = serializer.Serialize(result);
-
             IDisplayer displayer = new ConsoleDisplayer();
             displayer.Display(JsonLine);
             displayer.Display(XmlLine);
@@ -46,8 +41,6 @@ namespace TracerConsole
             displayer.Display(JsonLine);
             displayer = new FileDisplayer(@"D:\\kok.txt");
             displayer.Display(XmlLine);*/
-
-            ///
 
             Console.ReadKey();
         }
@@ -87,7 +80,6 @@ namespace TracerConsole
             for (int i = 0; i < 100; i++)
                 Console.WriteLine("kkk");
             _tracer.StopTrace();
-            bar--;
         }
 
         public static void ramp()
@@ -97,25 +89,12 @@ namespace TracerConsole
             _tracer.StopTrace();
         }
 
-        public static void recursion()
-        {
-            if (sho > 0)
-            {
-                _tracer.StartTrace();
-                sho--;
-                for (int i = 0; i < 1000; i++)
-                    Console.WriteLine("111");
-                recursion();
-                _tracer.StopTrace();
-            }
-            else
-                return;
-        }
     }
 
     public class Example
     {
-        public static ITracer _tracer;
+        private ITracer _tracer;
+        private int RecursionCount = 10;
 
         public Example(ITracer tracer)
         {
@@ -137,6 +116,21 @@ namespace TracerConsole
                 Console.WriteLine("uuu");
             DoSmth();
             _tracer.StopTrace();
+        }
+
+        public void recursion()
+        {
+            if (RecursionCount > 0)
+            {
+                _tracer.StartTrace();
+                RecursionCount--;
+                for (int i = 0; i < 1000; i++)
+                    Console.WriteLine("111");
+                recursion();
+                _tracer.StopTrace();
+            }
+            else
+                return;
         }
     }
 }

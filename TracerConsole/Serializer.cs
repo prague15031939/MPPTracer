@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Text;
 using System.IO;
 using Tracer;
 using Newtonsoft.Json;
@@ -33,7 +33,7 @@ namespace TracerConsole
             MemoryStream SerializationStream = new MemoryStream();
             XmlSerializer formatter = new XmlSerializer(typeof(TraceResult));
             formatter.Serialize(SerializationStream, obj);
-            return System.Text.Encoding.Default.GetString(SerializationStream.ToArray());
+            return Encoding.Default.GetString(SerializationStream.ToArray());
         }
     }
 }
